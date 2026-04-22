@@ -49,7 +49,7 @@ export async function fetchWeather(apiKey: string, city: string): Promise<string
 		`| 項目 | 値 |`,
 		`| --- | --- |`,
 		`| 気温 | ${temp}℃ |`,
-		`| 体感最低 / 最高 | ${tempMin}℃ / ${tempMax}℃ |`,
+		`| 最低 / 最高 | ${tempMin}℃ / ${tempMax}℃ |`,
 		`| 湿度 | ${data.main.humidity}% |`,
 		`| 風速 | ${data.wind.speed} m/s |`,
 	].join("\n");

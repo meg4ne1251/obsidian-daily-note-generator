@@ -33,12 +33,15 @@ export async function summarizeWithGemini(
 		...newsTitles.map((t, i) => `${i + 1}. ${t}`),
 	].join("\n");
 
-	const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
+	const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent`;
 
 	const res = await requestUrl({
 		url,
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		headers: {
+			"Content-Type": "application/json",
+			"x-goog-api-key": apiKey,
+		},
 		body: JSON.stringify({
 			contents: [{ parts: [{ text: prompt }] }],
 		}),

@@ -104,13 +104,11 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 			new Notice(`✅ ${dateStr}.md を生成しました！`);
 
 			// 作成したファイルを開く
-			const file = this.app.vault.getAbstractFileByPath(filePath);
-			if (file) {
-				await this.app.workspace.openLinkText(filePath, "", true);
-			}
+			await this.app.workspace.openLinkText(filePath, "", true);
 		} catch (error) {
 			console.error("Daily Note Generator:", error);
-			new Notice(`❌ デイリーノート生成に失敗しました: ${error}`);
+			const message = error instanceof Error ? error.message : String(error);
+			new Notice(`❌ デイリーノート生成に失敗しました: ${message}`);
 		}
 	}
 

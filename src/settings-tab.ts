@@ -86,7 +86,8 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 						);
 						new Notice(`✅ 天気取得成功！\n${result.slice(0, 100)}`);
 					} catch (e) {
-						new Notice(`❌ 天気取得失敗: ${e}`);
+						const msg = e instanceof Error ? e.message : String(e);
+						new Notice(`❌ 天気取得失敗: ${msg}`);
 					}
 				})
 			);
@@ -150,7 +151,8 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 						);
 						new Notice(`✅ カレンダー取得成功！\n${result.slice(0, 100)}`);
 					} catch (e) {
-						new Notice(`❌ カレンダー取得失敗: ${e}`);
+						const msg = e instanceof Error ? e.message : String(e);
+						new Notice(`❌ カレンダー取得失敗: ${msg}`);
 					}
 				})
 			);
@@ -192,7 +194,8 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 						);
 						new Notice(`✅ AI 要約成功！\n${summary.slice(0, 100)}`);
 					} catch (e) {
-						new Notice(`❌ ニュース/要約失敗: ${e}`);
+						const msg = e instanceof Error ? e.message : String(e);
+						new Notice(`❌ ニュース/要約失敗: ${msg}`);
 					}
 				})
 			);

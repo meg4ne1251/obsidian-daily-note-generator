@@ -96,10 +96,12 @@ export async function fetchCalendarEvents(
  * 終日イベントの場合は "終日" と表示
  */
 function formatEventTime(ev: CalendarEvent): string {
-	if (ev.start.date) {
+	if (ev.start.date || !ev.start.dateTime) {
 		return "🕐 終日";
 	}
 	const start = moment(ev.start.dateTime).format("HH:mm");
-	const end = moment(ev.end.dateTime).format("HH:mm");
-	return `🕐 ${start}〜${end}`;
+	const end = ev.end.dateTime
+		? moment(ev.end.dateTime).format("HH:mm")
+		: "";
+	return end ? `🕐 ${start}〜${end}` : `🕐 ${start}`;
 }
