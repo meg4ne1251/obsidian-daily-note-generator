@@ -3,8 +3,8 @@ import { DailyNoteGeneratorSettings, DEFAULT_SETTINGS } from "./types";
 import { DailyNoteGeneratorSettingTab } from "./settings-tab";
 import { fetchWeather } from "./weather";
 import { fetchCalendarEvents } from "./calendar";
-import { fetchNhkNews } from "./news";
-import { summarizeWithGemini } from "./gemini";
+import { fetchGeneralNews, fetchItNews, fetchInfraNews, NewsResult } from "./news";
+import { summarizeWithGemini, NewsCategory } from "./gemini";
 
 export default class DailyNoteGeneratorPlugin extends Plugin {
 	settings: DailyNoteGeneratorSettings = DEFAULT_SETTINGS;
@@ -147,37 +147,52 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 	}
 
 	async getNewsSection(): Promise<string> {
-		try {
-			const { items: newsItems, isFallback } = await fetchNhkNews(5);
+		const [generalSection, itSection, infraSection] = await Promise.all([
+			this.getNewsCategorySection("🌐 一般ニュース", "general", fetchGeneralNews),
+			this.getNewsCategorySection("💻 IT・技術ニュース", "it", fetchItNews),
+			this.getNewsCategorySection("🏗️ インフラ・クラウドニュース", "infra", fetchInfraNews),
+		]);
 
-			if (newsItems.length === 0) {
-				return "*ニュースを取得できませんでした*";
+		return [generalSection, "", itSection, "", infraSection].join("\n");
+	}
+
+	async getNewsCategorySection(
+		title: string,
+		category: NewsCategory,
+		fetchFn: (maxItems: number) => Promise<NewsResult>,
+	): Promise<string> {
+		try {
+			const result = await fetchFn(20);
+
+			if (result.items.length === 0) {
+				return `### ${title}\n*ニュースを取得できませんでした*`;
 			}
 
-			const headlineLines = newsItems.map(
-				(item) => `- [${item.title}](${item.link})`
-			);
-
-			const titles = newsItems.map((item) => item.title);
+			const titles = result.items.map((i) => i.title);
 			const summary = await summarizeWithGemini(
 				this.settings.geminiApiKey,
 				titles,
+				category,
 			);
 
-			const fallbackNote = isFallback
-				? "*（昨日のニュースが見つからなかったため、最新のニュースを表示しています）*\n\n"
+			const headlineLines = result.items.map(
+				(item) => `- [${item.title}](${item.link})`,
+			);
+			const fallbackNote = result.isFallback
+				? "*（昨日の記事が見つからなかったため、最新の記事を表示しています）*\n\n"
 				: "";
 
 			return [
-				fallbackNote + "### AI 要約",
+				`### ${title}`,
+				fallbackNote + "#### AI 要約",
 				summary,
 				"",
-				"### 見出し一覧",
+				"#### 見出し一覧",
 				...headlineLines,
 			].join("\n");
 		} catch (error) {
-			console.error("News fetch failed:", error);
-			return "*ニュース情報の取得に失敗しました*";
+			console.error(`${title} fetch failed:`, error);
+			return `### ${title}\n*取得に失敗しました*`;
 		}
 	}
 }

@@ -2,7 +2,7 @@ import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type DailyNoteGeneratorPlugin from "./main";
 import { fetchWeather } from "./weather";
 import { fetchCalendarEvents } from "./calendar";
-import { fetchNhkNews } from "./news";
+import { fetchGeneralNews } from "./news";
 import { summarizeWithGemini } from "./gemini";
 
 export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
@@ -181,7 +181,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 				btn.setButtonText("テスト").onClick(async () => {
 					try {
 						new Notice("📰 ニュース API をテスト中...");
-						const { items } = await fetchNhkNews(3);
+						const { items } = await fetchGeneralNews(3);
 						if (items.length === 0) {
 							new Notice("⚠️ ニュースが取得できませんでした");
 							return;

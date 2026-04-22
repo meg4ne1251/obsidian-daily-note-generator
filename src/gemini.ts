@@ -24,12 +24,22 @@ interface GeminiErrorResponse {
 // 安定版リリース後に廃止されて 404 になるため、安定版を使用する。
 const GEMINI_MODEL = "gemini-2.5-flash-lite";
 
+export type NewsCategory = "general" | "it" | "infra";
+
+const CATEGORY_INSTRUCTION: Record<NewsCategory, string> = {
+	general:
+		"以下のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
+	it: "以下のIT・技術・AI分野のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
+	infra: "以下のインフラ・クラウド・DevOps・SRE分野のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
+};
+
 /**
  * Gemini 2.5 Flash-Lite API でニュース見出しを日本語要約する
  */
 export async function summarizeWithGemini(
 	apiKey: string,
 	newsTitles: string[],
+	category: NewsCategory = "general",
 ): Promise<string> {
 	const trimmedKey = apiKey.trim();
 	if (!trimmedKey) {
@@ -42,7 +52,7 @@ export async function summarizeWithGemini(
 
 	const prompt = [
 		"あなたはニュースキュレーターです。",
-		"以下のニュース見出し一覧から、特に重要なトピックを3つ選び、",
+		CATEGORY_INSTRUCTION[category],
 		"それぞれ1〜2文で簡潔に日本語で要約してください。",
 		"出力はMarkdownの箇条書き（- ）で返してください。",
 		"",
