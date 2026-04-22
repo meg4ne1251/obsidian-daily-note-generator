@@ -8,7 +8,11 @@ export interface NewsItem {
 
 /**
  * NHK News Web の主要ニュース RSS から昨日のニュースを取得
- * RSS URL: https://www.nhk.or.jp/rss/news/cat0.xml
+ * RSS URL: https://www3.nhk.or.jp/rss/news/cat0.xml
+ *
+ * 注: かつての https://www.nhk.or.jp/rss/news/cat0.xml は 301 リダイレクトで
+ * 内部ホスト名 (news.web.nhk) に飛ばされ、一部環境で解決できず 404/失敗する。
+ * www3.nhk.or.jp は直接 200 を返す公式の RSS エンドポイント。
  */
 export interface NhkNewsResult {
 	items: NewsItem[];
@@ -17,7 +21,8 @@ export interface NhkNewsResult {
 
 export async function fetchNhkNews(maxItems: number = 5): Promise<NhkNewsResult> {
 	const res = await requestUrl({
-		url: "https://www.nhk.or.jp/rss/news/cat0.xml",
+		url: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+		throw: false,
 	});
 	if (res.status !== 200) {
 		throw new Error(`NHKニュースRSS取得エラー (HTTP ${res.status})`);

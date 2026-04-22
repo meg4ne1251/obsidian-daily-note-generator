@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(mkdir -p \"/Users/yuta/Obsidian/main-DB/.obsidian/plugins/daily-note-generator\")",
+      "Bash(cp /Users/yuta/dev/obsidian-daily-note-generator/main.js /Users/yuta/dev/obsidian-daily-note-generator/manifest.json \"/Users/yuta/Obsidian/main-DB/.obsidian/plugins/daily-note-generator/\")"
     ]
   }
 }

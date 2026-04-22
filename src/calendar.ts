@@ -28,11 +28,12 @@ async function getAccessToken(
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
-			client_id: clientId,
-			client_secret: clientSecret,
-			refresh_token: refreshToken,
+			client_id: clientId.trim(),
+			client_secret: clientSecret.trim(),
+			refresh_token: refreshToken.trim(),
 			grant_type: "refresh_token",
 		}).toString(),
+		throw: false,
 	});
 	if (res.status !== 200) {
 		throw new Error(`Google OAuth トークン取得エラー (HTTP ${res.status})`);
@@ -69,6 +70,7 @@ export async function fetchCalendarEvents(
 	const res = await requestUrl({
 		url: `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
 		headers: { Authorization: `Bearer ${accessToken}` },
+		throw: false,
 	});
 	if (res.status !== 200) {
 		throw new Error(`Google Calendar API エラー (HTTP ${res.status})`);

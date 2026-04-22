@@ -55,7 +55,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("API Key を入力")
 					.setValue(this.plugin.settings.openWeatherMapApiKey)
 					.onChange(async (value) => {
-						this.plugin.settings.openWeatherMapApiKey = value;
+						this.plugin.settings.openWeatherMapApiKey = value.trim();
 						await this.plugin.saveSettings();
 					});
 			});
@@ -68,7 +68,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("Kawasaki")
 					.setValue(this.plugin.settings.weatherCity)
 					.onChange(async (value) => {
-						this.plugin.settings.weatherCity = value;
+						this.plugin.settings.weatherCity = value.trim();
 						await this.plugin.saveSettings();
 					})
 			);
@@ -104,7 +104,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("Client ID を入力")
 					.setValue(this.plugin.settings.googleClientId)
 					.onChange(async (value) => {
-						this.plugin.settings.googleClientId = value;
+						this.plugin.settings.googleClientId = value.trim();
 						await this.plugin.saveSettings();
 					});
 			});
@@ -118,7 +118,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("Client Secret を入力")
 					.setValue(this.plugin.settings.googleClientSecret)
 					.onChange(async (value) => {
-						this.plugin.settings.googleClientSecret = value;
+						this.plugin.settings.googleClientSecret = value.trim();
 						await this.plugin.saveSettings();
 					});
 			});
@@ -132,7 +132,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("Refresh Token を入力")
 					.setValue(this.plugin.settings.googleRefreshToken)
 					.onChange(async (value) => {
-						this.plugin.settings.googleRefreshToken = value;
+						this.plugin.settings.googleRefreshToken = value.trim();
 						await this.plugin.saveSettings();
 					});
 			});
@@ -169,7 +169,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 					.setPlaceholder("API Key を入力")
 					.setValue(this.plugin.settings.geminiApiKey)
 					.onChange(async (value) => {
-						this.plugin.settings.geminiApiKey = value;
+						this.plugin.settings.geminiApiKey = value.trim();
 						await this.plugin.saveSettings();
 					});
 			});
