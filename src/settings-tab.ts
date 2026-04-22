@@ -33,7 +33,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("起動時に自動生成")
-			.setDesc("Obsidian 起動時に、その日のデイリーノートが無ければ自動生成する")
+			.setDesc("Obsidian 起動時に、その日のデイリーノートが無ければ自動生成する（次回起動時から有効）")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoGenerateOnStartup)
@@ -49,15 +49,16 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("OpenWeatherMap API Key")
 			.setDesc("openweathermap.org で取得した API キー")
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "password";
 				text
 					.setPlaceholder("API Key を入力")
 					.setValue(this.plugin.settings.openWeatherMapApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.openWeatherMapApiKey = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("都市名")
@@ -96,41 +97,44 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Google Client ID")
 			.setDesc("Google Cloud Console で取得した OAuth クライアント ID")
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "password";
 				text
 					.setPlaceholder("Client ID を入力")
 					.setValue(this.plugin.settings.googleClientId)
 					.onChange(async (value) => {
 						this.plugin.settings.googleClientId = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Google Client Secret")
 			.setDesc("OAuth クライアントシークレット")
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "password";
 				text
 					.setPlaceholder("Client Secret を入力")
 					.setValue(this.plugin.settings.googleClientSecret)
 					.onChange(async (value) => {
 						this.plugin.settings.googleClientSecret = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Google Refresh Token")
 			.setDesc("OAuth で取得したリフレッシュトークン")
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "password";
 				text
 					.setPlaceholder("Refresh Token を入力")
 					.setValue(this.plugin.settings.googleRefreshToken)
 					.onChange(async (value) => {
 						this.plugin.settings.googleRefreshToken = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("カレンダー API テスト")
@@ -157,15 +161,16 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Gemini API Key")
 			.setDesc("Google AI Studio で取得した Gemini API キー")
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "password";
 				text
 					.setPlaceholder("API Key を入力")
 					.setValue(this.plugin.settings.geminiApiKey)
 					.onChange(async (value) => {
 						this.plugin.settings.geminiApiKey = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("ニュース + AI 要約テスト")
@@ -174,7 +179,7 @@ export class DailyNoteGeneratorSettingTab extends PluginSettingTab {
 				btn.setButtonText("テスト").onClick(async () => {
 					try {
 						new Notice("📰 ニュース API をテスト中...");
-						const items = await fetchNhkNews(3);
+						const { items } = await fetchNhkNews(3);
 						if (items.length === 0) {
 							new Notice("⚠️ ニュースが取得できませんでした");
 							return;

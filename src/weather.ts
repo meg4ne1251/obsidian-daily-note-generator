@@ -32,6 +32,9 @@ export async function fetchWeather(apiKey: string, city: string): Promise<string
 	const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=ja`;
 
 	const res = await requestUrl({ url });
+	if (res.status !== 200) {
+		throw new Error(`天気API エラー (HTTP ${res.status})`);
+	}
 	const data: WeatherResponse = res.json;
 
 	const weather = data.weather[0];
@@ -46,7 +49,7 @@ export async function fetchWeather(apiKey: string, city: string): Promise<string
 		`| 項目 | 値 |`,
 		`| --- | --- |`,
 		`| 気温 | ${temp}℃ |`,
-		`| 最低 / 最高 | ${tempMin}℃ / ${tempMax}℃ |`,
+		`| 体感最低 / 最高 | ${tempMin}℃ / ${tempMax}℃ |`,
 		`| 湿度 | ${data.main.humidity}% |`,
 		`| 風速 | ${data.wind.speed} m/s |`,
 	].join("\n");

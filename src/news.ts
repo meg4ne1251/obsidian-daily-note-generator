@@ -10,10 +10,18 @@ export interface NewsItem {
  * NHK News Web の主要ニュース RSS から昨日のニュースを取得
  * RSS URL: https://www.nhk.or.jp/rss/news/cat0.xml
  */
-export async function fetchNhkNews(maxItems: number = 5): Promise<NewsItem[]> {
+export interface NhkNewsResult {
+	items: NewsItem[];
+	isFallback: boolean;
+}
+
+export async function fetchNhkNews(maxItems: number = 5): Promise<NhkNewsResult> {
 	const res = await requestUrl({
 		url: "https://www.nhk.or.jp/rss/news/cat0.xml",
 	});
+	if (res.status !== 200) {
+		throw new Error(`NHKニュースRSS取得エラー (HTTP ${res.status})`);
+	}
 
 	const xml = res.text;
 	const items = parseRssItems(xml);
@@ -26,8 +34,10 @@ export async function fetchNhkNews(maxItems: number = 5): Promise<NewsItem[]> {
 	});
 
 	// 昨日のニュースが無い場合は最新のものを返す
-	const result = filtered.length > 0 ? filtered : items;
-	return result.slice(0, maxItems);
+	if (filtered.length > 0) {
+		return { items: filtered.slice(0, maxItems), isFallback: false };
+	}
+	return { items: items.slice(0, maxItems), isFallback: true };
 }
 
 /**

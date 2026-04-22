@@ -97,10 +97,8 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 				"",
 			].join("\n");
 
-			// フォルダが無ければ作成
-			if (!this.app.vault.getAbstractFileByPath(folder)) {
-				await this.app.vault.createFolder(folder);
-			}
+			// フォルダが無ければ再帰的に作成
+			await this.ensureFolder(folder);
 
 			await this.app.vault.create(filePath, content);
 			new Notice(`✅ ${dateStr}.md を生成しました！`);
@@ -114,6 +112,15 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 			console.error("Daily Note Generator:", error);
 			new Notice(`❌ デイリーノート生成に失敗しました: ${error}`);
 		}
+	}
+
+	async ensureFolder(path: string): Promise<void> {
+		if (this.app.vault.getAbstractFileByPath(path)) return;
+		const parent = path.substring(0, path.lastIndexOf("/"));
+		if (parent) {
+			await this.ensureFolder(parent);
+		}
+		await this.app.vault.createFolder(path);
 	}
 
 	async getWeatherSection(): Promise<string> {
@@ -143,7 +150,7 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 
 	async getNewsSection(): Promise<string> {
 		try {
-			const newsItems = await fetchNhkNews(5);
+			const { items: newsItems, isFallback } = await fetchNhkNews(5);
 
 			if (newsItems.length === 0) {
 				return "*ニュースを取得できませんでした*";
@@ -159,8 +166,12 @@ export default class DailyNoteGeneratorPlugin extends Plugin {
 				titles,
 			);
 
+			const fallbackNote = isFallback
+				? "*（昨日のニュースが見つからなかったため、最新のニュースを表示しています）*\n\n"
+				: "";
+
 			return [
-				"### AI 要約",
+				fallbackNote + "### AI 要約",
 				summary,
 				"",
 				"### 見出し一覧",

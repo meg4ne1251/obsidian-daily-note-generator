@@ -33,7 +33,7 @@ export async function summarizeWithGemini(
 		...newsTitles.map((t, i) => `${i + 1}. ${t}`),
 	].join("\n");
 
-	const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${apiKey}`;
+	const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
 
 	const res = await requestUrl({
 		url,
@@ -43,6 +43,9 @@ export async function summarizeWithGemini(
 			contents: [{ parts: [{ text: prompt }] }],
 		}),
 	});
+	if (res.status !== 200) {
+		throw new Error(`Gemini API エラー (HTTP ${res.status})`);
+	}
 
 	const data: GeminiResponse = res.json;
 	const text = data.candidates?.[0]?.content?.parts?.[0]?.text;

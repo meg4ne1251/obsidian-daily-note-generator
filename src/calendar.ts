@@ -34,6 +34,9 @@ async function getAccessToken(
 			grant_type: "refresh_token",
 		}).toString(),
 	});
+	if (res.status !== 200) {
+		throw new Error(`Google OAuth トークン取得エラー (HTTP ${res.status})`);
+	}
 	const data: TokenResponse = res.json;
 	return data.access_token;
 }
@@ -67,6 +70,9 @@ export async function fetchCalendarEvents(
 		url: `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
+	if (res.status !== 200) {
+		throw new Error(`Google Calendar API エラー (HTTP ${res.status})`);
+	}
 
 	const data: CalendarListResponse = res.json;
 	const events = data.items ?? [];
