@@ -18,7 +18,8 @@
       "Bash(curl -s \"https://qiita.com/popular-items/feed\")",
       "Bash(curl -s \"https://zenn.dev/feed\")",
       "Bash(curl -s \"https://www.publickey1.jp/atom.xml\")",
-      "Bash(curl -s \"https://news.yahoo.co.jp/rss/topics/it.xml\")"
+      "Bash(curl -s \"https://news.yahoo.co.jp/rss/topics/it.xml\")",
+      "Bash(git rm *)"
     ]
   }
 }
