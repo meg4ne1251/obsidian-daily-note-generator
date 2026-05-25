@@ -3,7 +3,22 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(mkdir -p \"/Users/yuta/Obsidian/main-DB/.obsidian/plugins/daily-note-generator\")",
-      "Bash(cp /Users/yuta/dev/obsidian-daily-note-generator/main.js /Users/yuta/dev/obsidian-daily-note-generator/manifest.json \"/Users/yuta/Obsidian/main-DB/.obsidian/plugins/daily-note-generator/\")"
+      "Bash(cp /Users/yuta/dev/obsidian-daily-note-generator/main.js /Users/yuta/dev/obsidian-daily-note-generator/manifest.json \"/Users/yuta/Obsidian/main-DB/.obsidian/plugins/daily-note-generator/\")",
+      "Bash(npm install *)",
+      "Bash(npm start *)",
+      "Bash(mkdir -p /tmp/daily-note-test)",
+      "Bash(OUTPUT_DIR=/tmp/daily-note-test npm start)",
+      "Bash(node /tmp/daily-note-test/test-harness.mjs)",
+      "Bash(node *)",
+      "Bash(curl -s \"https://b.hatena.ne.jp/hotentry/it.rss\")",
+      "Bash(curl -s \"https://news.yahoo.co.jp/rss/topics/top-picks.xml\")",
+      "Bash(npx tsx --eval ' *)",
+      "Bash(npx tsx *)",
+      "Bash(curl -sI \"https://qiita.com/popular-items/feed\")",
+      "Bash(curl -s \"https://qiita.com/popular-items/feed\")",
+      "Bash(curl -s \"https://zenn.dev/feed\")",
+      "Bash(curl -s \"https://www.publickey1.jp/atom.xml\")",
+      "Bash(curl -s \"https://news.yahoo.co.jp/rss/topics/it.xml\")"
     ]
   }
 }

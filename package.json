@@ -1,20 +1,23 @@
 {
 	"name": "obsidian-daily-note-generator",
-	"version": "0.1.0",
-	"description": "天気・Googleカレンダー・ニュース要約を含むデイリーノートを自動生成するObsidianプラグイン",
-	"main": "main.js",
+	"version": "0.2.0",
+	"description": "天気・Googleカレンダー・ニュース要約を含むデイリーノートを cron で自動生成するスクリプト",
+	"private": true,
+	"type": "module",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production"
+		"start": "tsx src/index.ts"
 	},
 	"keywords": [],
 	"author": "Megane",
 	"license": "MIT",
+	"dependencies": {
+		"@xmldom/xmldom": "^0.9.5",
+		"dayjs": "^1.11.13",
+		"dotenv": "^16.4.5"
+	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",
-		"esbuild": "^0.27.4",
-		"obsidian": "latest",
-		"tslib": "^2.7.0",
+		"tsx": "^4.19.2",
 		"typescript": "^5.6.0"
 	}
 }

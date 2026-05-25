@@ -1,4 +1,4 @@
-import { requestUrl, moment } from "obsidian";
+import dayjs from "dayjs";
 
 interface TokenResponse {
 	access_token: string;
@@ -15,16 +15,12 @@ interface CalendarListResponse {
 	items?: CalendarEvent[];
 }
 
-/**
- * Refresh Token を使って Access Token を取得
- */
 async function getAccessToken(
 	clientId: string,
 	clientSecret: string,
 	refreshToken: string,
 ): Promise<string> {
-	const res = await requestUrl({
-		url: "https://oauth2.googleapis.com/token",
+	const res = await fetch("https://oauth2.googleapis.com/token", {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
@@ -33,32 +29,27 @@ async function getAccessToken(
 			refresh_token: refreshToken.trim(),
 			grant_type: "refresh_token",
 		}).toString(),
-		throw: false,
 	});
-	if (res.status !== 200) {
+	if (!res.ok) {
 		throw new Error(`Google OAuth トークン取得エラー (HTTP ${res.status})`);
 	}
-	const data: TokenResponse = res.json;
+	const data = (await res.json()) as TokenResponse;
 	return data.access_token;
 }
 
-/**
- * Google Calendar API から今日のイベントを取得し、Markdown テキストを返す
- */
 export async function fetchCalendarEvents(
 	clientId: string,
 	clientSecret: string,
 	refreshToken: string,
 ): Promise<string> {
 	if (!clientId || !clientSecret || !refreshToken) {
-		return "*Google カレンダーの認証情報が設定されていません。設定画面で入力してください。*";
+		return "*Google カレンダーの認証情報が設定されていません。.env で GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN を設定してください。*";
 	}
 
 	const accessToken = await getAccessToken(clientId, clientSecret, refreshToken);
 
-	// 今日の 00:00 〜 23:59 を取得範囲にする
-	const todayStart = moment().startOf("day").toISOString();
-	const todayEnd = moment().endOf("day").toISOString();
+	const todayStart = dayjs().startOf("day").toISOString();
+	const todayEnd = dayjs().endOf("day").toISOString();
 
 	const params = new URLSearchParams({
 		timeMin: todayStart,
@@ -67,16 +58,17 @@ export async function fetchCalendarEvents(
 		orderBy: "startTime",
 	});
 
-	const res = await requestUrl({
-		url: `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-		headers: { Authorization: `Bearer ${accessToken}` },
-		throw: false,
-	});
-	if (res.status !== 200) {
+	const res = await fetch(
+		`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
+		{
+			headers: { Authorization: `Bearer ${accessToken}` },
+		},
+	);
+	if (!res.ok) {
 		throw new Error(`Google Calendar API エラー (HTTP ${res.status})`);
 	}
 
-	const data: CalendarListResponse = res.json;
+	const data = (await res.json()) as CalendarListResponse;
 	const events = data.items ?? [];
 
 	if (events.length === 0) {
@@ -93,17 +85,11 @@ export async function fetchCalendarEvents(
 	return lines.join("\n");
 }
 
-/**
- * イベントの時間を "HH:mm〜HH:mm" 形式にフォーマット
- * 終日イベントの場合は "終日" と表示
- */
 function formatEventTime(ev: CalendarEvent): string {
 	if (ev.start.date || !ev.start.dateTime) {
 		return "🕐 終日";
 	}
-	const start = moment(ev.start.dateTime).format("HH:mm");
-	const end = ev.end.dateTime
-		? moment(ev.end.dateTime).format("HH:mm")
-		: "";
+	const start = dayjs(ev.start.dateTime).format("HH:mm");
+	const end = ev.end.dateTime ? dayjs(ev.end.dateTime).format("HH:mm") : "";
 	return end ? `🕐 ${start}〜${end}` : `🕐 ${start}`;
 }
