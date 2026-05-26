@@ -1,9 +1,11 @@
 interface WeatherResponse {
 	weather: { description: string; icon: string }[];
-	main: { temp: number; temp_min: number; temp_max: number; humidity: number };
+	main: { temp: number; feels_like: number; humidity: number };
 	wind: { speed: number };
 	name: string;
 }
+
+const FETCH_TIMEOUT_MS = 10_000;
 
 const WEATHER_EMOJI: Record<string, string> = {
 	"01d": "☀️", "01n": "🌙",
@@ -25,7 +27,7 @@ export async function fetchWeather(apiKey: string, city: string): Promise<string
 
 	const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${encodeURIComponent(trimmedKey)}&units=metric&lang=ja`;
 
-	const res = await fetch(url);
+	const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 	if (!res.ok) {
 		let apiMessage = "";
 		try {
@@ -52,19 +54,23 @@ export async function fetchWeather(apiKey: string, city: string): Promise<string
 	}
 	const data = (await res.json()) as WeatherResponse;
 
-	const weather = data.weather[0];
+	const weather = data.weather?.[0];
+	if (!weather) {
+		throw new Error("天気API エラー — 応答に weather 情報が含まれていません。");
+	}
 	const emoji = WEATHER_EMOJI[weather.icon] ?? "🌤️";
 	const temp = Math.round(data.main.temp);
-	const tempMin = Math.round(data.main.temp_min);
-	const tempMax = Math.round(data.main.temp_max);
+	const feelsLike = Math.round(data.main.feels_like);
 
+	// Current Weather エンドポイントの temp_min/temp_max は「観測地域内の現在の
+	// 最低/最高」であり日次予報レンジではないため表示しない。代わりに体感温度を出す。
 	return [
 		`${emoji} **${weather.description}**（${data.name}）`,
 		"",
 		`| 項目 | 値 |`,
 		`| --- | --- |`,
 		`| 気温 | ${temp}℃ |`,
-		`| 最低 / 最高 | ${tempMin}℃ / ${tempMax}℃ |`,
+		`| 体感温度 | ${feelsLike}℃ |`,
 		`| 湿度 | ${data.main.humidity}% |`,
 		`| 風速 | ${data.wind.speed} m/s |`,
 	].join("\n");

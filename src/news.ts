@@ -54,8 +54,10 @@ const INFRA_KEYWORDS = [
 	"prometheus",
 ];
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 async function fetchText(url: string): Promise<string> {
-	const res = await fetch(url);
+	const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 	if (!res.ok) {
 		throw new Error(`RSS取得エラー (HTTP ${res.status}): ${url}`);
 	}
@@ -206,7 +208,15 @@ function matchesInfra(item: NewsItem): boolean {
 	const haystack = [item.title, ...(item.subjects ?? [])]
 		.join(" ")
 		.toLowerCase();
-	return INFRA_KEYWORDS.some((kw) => haystack.includes(kw));
+	return INFRA_KEYWORDS.some((kw) => {
+		// ASCII の略語（sre, k8s, cdn など）は単語境界で判定し、
+		// "disregard" に "sre" がヒットするような誤検出を防ぐ。
+		// 日本語キーワードは単語境界の概念が無いため部分一致のまま。
+		if (/^[a-z0-9]+$/.test(kw)) {
+			return new RegExp(`\\b${kw}\\b`).test(haystack);
+		}
+		return haystack.includes(kw);
+	});
 }
 
 async function safeFetch(
@@ -221,8 +231,10 @@ async function safeFetch(
 	}
 }
 
+// maxItems は呼び出し側（index.ts）が表示・要約したい件数を指定する。
+// デフォルトの 5 は単体利用時のフォールバックで、通常は 20 が渡される。
 export async function fetchGeneralNews(maxItems = 5): Promise<NewsItem[]> {
-	const items = await fetchYahooTopPicks();
+	const items = await safeFetch("Yahoo top picks", fetchYahooTopPicks);
 	return items.slice(0, maxItems);
 }
 

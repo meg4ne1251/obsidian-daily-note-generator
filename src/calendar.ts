@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 interface TokenResponse {
 	access_token: string;
 }
@@ -29,6 +31,7 @@ async function getAccessToken(
 			refresh_token: refreshToken.trim(),
 			grant_type: "refresh_token",
 		}).toString(),
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 	if (!res.ok) {
 		throw new Error(`Google OAuth トークン取得エラー (HTTP ${res.status})`);
@@ -62,6 +65,7 @@ export async function fetchCalendarEvents(
 		`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
 		{
 			headers: { Authorization: `Bearer ${accessToken}` },
+			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 		},
 	);
 	if (!res.ok) {

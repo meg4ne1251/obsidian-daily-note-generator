@@ -19,6 +19,8 @@ interface GeminiErrorResponse {
 }
 
 const GEMINI_MODEL = "gemini-2.5-flash-lite";
+// LLM の生成は RSS 取得より時間がかかるため長めに設定。
+const FETCH_TIMEOUT_MS = 30_000;
 
 export type NewsCategory = "general" | "it" | "infra";
 
@@ -64,6 +66,7 @@ export async function summarizeWithGemini(
 		body: JSON.stringify({
 			contents: [{ parts: [{ text: prompt }] }],
 		}),
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 
 	if (!res.ok) {

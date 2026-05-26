@@ -5,7 +5,11 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"start": "tsx src/index.ts"
+		"start": "tsx src/index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"engines": {
+		"node": ">=18"
 	},
 	"keywords": [],
 	"author": "Megane",
