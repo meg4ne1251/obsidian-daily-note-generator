@@ -1,5 +1,6 @@
 import { mkdir, writeFile, access } from "node:fs/promises";
 import { dirname } from "node:path";
+import { pathToFileURL } from "node:url";
 import dayjs from "dayjs";
 import "dayjs/locale/ja.js";
 import { config as loadDotenv } from "dotenv";
@@ -17,7 +18,7 @@ import { summarizeWithGemini, type NewsCategory } from "./gemini.js";
 loadDotenv();
 dayjs.locale("ja");
 
-interface Settings {
+export interface Settings {
 	outputDir: string;
 	openWeatherMapApiKey: string;
 	weatherCity: string;
@@ -27,7 +28,7 @@ interface Settings {
 	geminiApiKey: string;
 }
 
-function loadSettings(): Settings {
+export function loadSettings(): Settings {
 	const outputDir = process.env.OUTPUT_DIR;
 	if (!outputDir) {
 		throw new Error(
@@ -45,7 +46,7 @@ function loadSettings(): Settings {
 	};
 }
 
-async function fileExists(path: string): Promise<boolean> {
+export async function fileExists(path: string): Promise<boolean> {
 	try {
 		await access(path);
 		return true;
@@ -76,7 +77,7 @@ async function getCalendarSection(settings: Settings): Promise<string> {
 	}
 }
 
-async function getNewsCategorySection(
+export async function getNewsCategorySection(
 	settings: Settings,
 	title: string,
 	category: NewsCategory,
@@ -129,7 +130,7 @@ async function getNewsSection(settings: Settings): Promise<string> {
 	return [generalSection, "", itSection, "", infraSection].join("\n");
 }
 
-async function generateDailyNote(): Promise<void> {
+export async function generateDailyNote(): Promise<void> {
 	const settings = loadSettings();
 
 	const today = dayjs();
@@ -176,7 +177,15 @@ async function generateDailyNote(): Promise<void> {
 	console.log(`✅ ${filePath} を生成しました！`);
 }
 
-generateDailyNote().catch((error) => {
-	console.error("❌ デイリーノート生成に失敗しました:", error);
-	process.exit(1);
-});
+// このファイルが直接実行された場合（npm start / tsx src/index.ts）のみ生成を走らせる。
+// テストから import したときは副作用で実行されないようにする。
+const invokedDirectly =
+	process.argv[1] !== undefined &&
+	import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (invokedDirectly) {
+	generateDailyNote().catch((error) => {
+		console.error("❌ デイリーノート生成に失敗しました:", error);
+		process.exit(1);
+	});
+}

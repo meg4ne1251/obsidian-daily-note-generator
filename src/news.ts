@@ -80,7 +80,7 @@ function getAllElementsText(parent: Element, tagName: string): string[] {
 	return result;
 }
 
-function parseRss2(xml: string): NewsItem[] {
+export function parseRss2(xml: string): NewsItem[] {
 	const doc = new DOMParser().parseFromString(xml, "text/xml");
 	const items = doc.getElementsByTagName("item");
 	const result: NewsItem[] = [];
@@ -94,7 +94,7 @@ function parseRss2(xml: string): NewsItem[] {
 	return result;
 }
 
-function parseHatena(xml: string): NewsItem[] {
+export function parseHatena(xml: string): NewsItem[] {
 	const doc = new DOMParser().parseFromString(xml, "text/xml");
 	const items = doc.getElementsByTagName("item");
 	const result: NewsItem[] = [];
@@ -113,7 +113,7 @@ function parseHatena(xml: string): NewsItem[] {
 	return result;
 }
 
-function parseAtom(xml: string): NewsItem[] {
+export function parseAtom(xml: string): NewsItem[] {
 	const doc = new DOMParser().parseFromString(xml, "text/xml");
 	const entries = doc.getElementsByTagName("entry");
 	const result: NewsItem[] = [];
@@ -147,7 +147,7 @@ function parseAtom(xml: string): NewsItem[] {
 	return result;
 }
 
-function withSource(items: NewsItem[], source: string): NewsItem[] {
+export function withSource(items: NewsItem[], source: string): NewsItem[] {
 	return items.map((item) => ({ ...item, source }));
 }
 
@@ -184,7 +184,7 @@ async function fetchGoogleNewsSearch(query: string): Promise<NewsItem[]> {
 	return withSource(parseRss2(xml), "Google News");
 }
 
-function dedupeByLink(items: NewsItem[]): NewsItem[] {
+export function dedupeByLink(items: NewsItem[]): NewsItem[] {
 	const seen = new Set<string>();
 	return items.filter((item) => {
 		if (!item.link || seen.has(item.link)) return false;
@@ -193,7 +193,7 @@ function dedupeByLink(items: NewsItem[]): NewsItem[] {
 	});
 }
 
-function roundRobin<T>(sources: T[][]): T[] {
+export function roundRobin<T>(sources: T[][]): T[] {
 	const result: T[] = [];
 	const maxLen = Math.max(0, ...sources.map((s) => s.length));
 	for (let i = 0; i < maxLen; i++) {
@@ -204,7 +204,7 @@ function roundRobin<T>(sources: T[][]): T[] {
 	return result;
 }
 
-function matchesInfra(item: NewsItem): boolean {
+export function matchesInfra(item: NewsItem): boolean {
 	const haystack = [item.title, ...(item.subjects ?? [])]
 		.join(" ")
 		.toLowerCase();
