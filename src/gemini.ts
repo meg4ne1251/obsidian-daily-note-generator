@@ -48,6 +48,8 @@ export async function summarizeWithGemini(
 	const prompt = [
 		"あなたはニュースキュレーターです。",
 		CATEGORY_INSTRUCTION[category],
+		"特に本日または昨日に話題になった・拡散された新しいトピックを優先してください。",
+		"各見出しの括弧内には、ソース・ブックマーク数・公開からの経過時間などの参考情報が含まれることがあります。",
 		"それぞれ1〜2文で簡潔に日本語で要約してください。",
 		"出力はMarkdownの箇条書き（- ）で返してください。",
 		"",

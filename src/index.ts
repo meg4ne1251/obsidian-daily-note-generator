@@ -11,6 +11,7 @@ import {
 	fetchGeneralNews,
 	fetchItNews,
 	fetchInfraNews,
+	formatRelativeTime,
 	type NewsItem,
 } from "./news.js";
 import { summarizeWithGemini, type NewsCategory } from "./gemini.js";
@@ -105,10 +106,23 @@ export async function getNewsCategorySection(
 			return `### ${title}\n*ニュースを取得できませんでした*`;
 		}
 
-		const titles = items.map((i) => i.title);
+		const now = new Date();
+
+		// Gemini には「いつ・どれくらい話題か」を判断させたいので、タイトルだけでなく
+		// ソース・ブックマーク数・経過時間を括弧で添えて渡す。
+		const summaryInput = items.map((item) => {
+			const meta: string[] = [];
+			if (item.source) meta.push(item.source);
+			if (typeof item.bookmarkCount === "number") {
+				meta.push(`🔖${item.bookmarkCount}`);
+			}
+			const age = formatRelativeTime(item.pubDate, now);
+			if (age) meta.push(age);
+			return meta.length > 0 ? `${item.title}（${meta.join(" / ")}）` : item.title;
+		});
 		const summary = await summarizeWithGemini(
 			settings.geminiApiKey,
-			titles,
+			summaryInput,
 			category,
 		);
 
@@ -118,7 +132,9 @@ export async function getNewsCategorySection(
 				typeof item.bookmarkCount === "number"
 					? ` 🔖${item.bookmarkCount}`
 					: "";
-			return `- ${toMarkdownLink(item.title, item.link)}${source}${count}`;
+			const age = formatRelativeTime(item.pubDate, now);
+			const ageStr = age ? ` 🕒${age}` : "";
+			return `- ${toMarkdownLink(item.title, item.link)}${source}${count}${ageStr}`;
 		});
 
 		return [
