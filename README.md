@@ -113,7 +113,7 @@ curl -X POST https://oauth2.googleapis.com/token \
 npm start
 ```
 
-`OUTPUT_DIR/YYYY-MM-DD.md` が生成されれば成功です。
+`OUTPUT_DIR/YYYY/MM/YYYY-MM-DD.md`（例: `OUTPUT_DIR/2026/06/2026-06-01.md`）が生成されれば成功です。
 
 ## cron で毎日自動実行
 

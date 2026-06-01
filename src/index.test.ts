@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import dayjs from "dayjs";
@@ -9,6 +9,7 @@ import {
 	generateDailyNote,
 	getNewsCategorySection,
 	loadSettings,
+	toMarkdownLink,
 } from "./index.js";
 import type { NewsItem } from "./news.js";
 
@@ -99,6 +100,26 @@ describe("fileExists", () => {
 	});
 });
 
+describe("toMarkdownLink", () => {
+	it("通常のタイトルとリンクはそのまま整形する", () => {
+		expect(toMarkdownLink("普通の記事", "https://e.com/1")).toBe(
+			"[普通の記事](https://e.com/1)",
+		);
+	});
+
+	it("タイトル内の角括弧をエスケープして Obsidian のウィキリンク誤認を防ぐ", () => {
+		expect(toMarkdownLink("[AI] 開発環境", "https://e.com/1")).toBe(
+			"[\\[AI\\] 開発環境](https://e.com/1)",
+		);
+	});
+
+	it("URL 内の空白と丸括弧をエンコードしてリンクの早期終了を防ぐ", () => {
+		expect(toMarkdownLink("記事", "https://e.com/a_(1)_b")).toBe(
+			"[記事](https://e.com/a_%281%29_b)",
+		);
+	});
+});
+
 describe("getNewsCategorySection", () => {
 	it("取得件数が 0 なら『取得できませんでした』を返す", async () => {
 		const section = await getNewsCategorySection(
@@ -173,11 +194,13 @@ describe("generateDailyNote", () => {
 	it("当日分のノートを生成し、各セクションを含む", async () => {
 		await generateDailyNote();
 
-		const files = await readdir(outDir);
+		// ノートは OUTPUT_DIR/YYYY/MM/ 配下に保存される。
+		const noteDir = join(outDir, dayjs().format("YYYY"), dayjs().format("MM"));
+		const files = await readdir(noteDir);
 		expect(files).toHaveLength(1);
 		expect(files[0]).toMatch(/^\d{4}-\d{2}-\d{2}\.md$/);
 
-		const content = await readFile(join(outDir, files[0]), "utf-8");
+		const content = await readFile(join(noteDir, files[0]), "utf-8");
 
 		expect(content).toContain(dayjs().format("YYYY年M月D日"));
 		expect(content).toContain("## 🌤️ 天気");
@@ -192,8 +215,10 @@ describe("generateDailyNote", () => {
 	});
 
 	it("既にファイルが存在する日は上書きせずスキップする", async () => {
-		const today = dayjs().format("YYYY-MM-DD");
-		const path = join(outDir, `${today}.md`);
+		const today = dayjs();
+		const noteDir = join(outDir, today.format("YYYY"), today.format("MM"));
+		await mkdir(noteDir, { recursive: true });
+		const path = join(noteDir, `${today.format("YYYY-MM-DD")}.md`);
 		await writeFile(path, "既存の内容", "utf-8");
 
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});

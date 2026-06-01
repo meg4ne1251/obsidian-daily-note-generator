@@ -77,6 +77,21 @@ async function getCalendarSection(settings: Settings): Promise<string> {
 	}
 }
 
+// ニュースタイトルには ASCII の角括弧（例: "[AI] ..."）が含まれることがある。
+// そのまま `[title](url)` に埋め込むと、Obsidian では `[[` がウィキリンクとして
+// 解釈され、CommonMark でも括弧の対応が崩れてリンクが壊れる。リンクテキスト内の
+// `[` `]` をエスケープし、URL 内の空白・`)` を百分率エンコードして防ぐ。
+export function toMarkdownLink(title: string, link: string): string {
+	const safeTitle = title.replace(/[[\]]/g, (c) => `\\${c}`);
+	// 空白・丸括弧は CommonMark のインラインリンク終端や対応崩れを招くため
+	// 百分率エンコードする（既にエンコード済みの URL に対しても冪等）。
+	const safeLink = link
+		.replace(/ /g, "%20")
+		.replace(/\(/g, "%28")
+		.replace(/\)/g, "%29");
+	return `[${safeTitle}](${safeLink})`;
+}
+
 export async function getNewsCategorySection(
 	settings: Settings,
 	title: string,
@@ -103,7 +118,7 @@ export async function getNewsCategorySection(
 				typeof item.bookmarkCount === "number"
 					? ` 🔖${item.bookmarkCount}`
 					: "";
-			return `- [${item.title}](${item.link})${source}${count}`;
+			return `- ${toMarkdownLink(item.title, item.link)}${source}${count}`;
 		});
 
 		return [
@@ -135,9 +150,13 @@ export async function generateDailyNote(): Promise<void> {
 
 	const today = dayjs();
 	const dateStr = today.format("YYYY-MM-DD");
+	const yearStr = today.format("YYYY");
+	const monthStr = today.format("MM");
 	const displayDate = today.format("YYYY年M月D日（ddd）");
 
-	const filePath = `${settings.outputDir}/${dateStr}.md`;
+	// 年・月のサブディレクトリに分けて保存する（例: OUTPUT_DIR/2026/06/2026-06-01.md）。
+	// 中間ディレクトリは後続の mkdir({ recursive: true }) で自動生成される。
+	const filePath = `${settings.outputDir}/${yearStr}/${monthStr}/${dateStr}.md`;
 
 	if (await fileExists(filePath)) {
 		console.log(`⚠️  ${filePath} は既に存在します。スキップします。`);
