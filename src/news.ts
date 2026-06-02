@@ -10,10 +10,12 @@ export interface NewsItem {
 }
 
 const YAHOO_TOP_PICKS = "https://news.yahoo.co.jp/rss/topics/top-picks.xml";
+const HATENA_HOTENTRY_ALL = "https://b.hatena.ne.jp/hotentry.rss";
 const HATENA_HOTENTRY_IT = "https://b.hatena.ne.jp/hotentry/it.rss";
 const QIITA_POPULAR = "https://qiita.com/popular-items/feed";
 const ZENN_TRENDING = "https://zenn.dev/feed";
 const PUBLICKEY = "https://www.publickey1.jp/atom.xml";
+const GIGAZINE_RSS = "https://gigazine.net/news/rss_2.0/";
 const GOOGLE_NEWS_SEARCH = "https://news.google.com/rss/search";
 const GOOGLE_TRENDS_RSS = "https://trends.google.com/trending/rss";
 
@@ -192,6 +194,16 @@ async function fetchHatenaIt(): Promise<NewsItem[]> {
 	return items;
 }
 
+// はてブ総合（人気エントリー）。国内トレンド枠に「実際にどれだけブックマーク
+// されたか」という話題度の実数値を与えるための源。日本で今まさに読まれている
+// 記事を拾う。
+async function fetchHatenaHotentry(): Promise<NewsItem[]> {
+	const xml = await fetchText(HATENA_HOTENTRY_ALL);
+	const items = withSource(parseHatena(xml), "はてブ");
+	items.sort((a, b) => (b.bookmarkCount ?? 0) - (a.bookmarkCount ?? 0));
+	return items;
+}
+
 async function fetchQiitaPopular(): Promise<NewsItem[]> {
 	const xml = await fetchText(QIITA_POPULAR);
 	return withSource(parseAtom(xml), "Qiita");
@@ -205,6 +217,11 @@ async function fetchZennTrending(): Promise<NewsItem[]> {
 async function fetchPublickey(): Promise<NewsItem[]> {
 	const xml = await fetchText(PUBLICKEY);
 	return withSource(parseAtom(xml), "Publickey");
+}
+
+async function fetchGigazine(): Promise<NewsItem[]> {
+	const xml = await fetchText(GIGAZINE_RSS);
+	return withSource(parseRss2(xml), "GIGAZINE");
 }
 
 async function fetchGoogleNewsSearch(query: string): Promise<NewsItem[]> {
@@ -238,7 +255,10 @@ const BUZZ_CAP = 300;
 // ブックマーク数のような明示的な話題度指標を持たないソース向けの代理値。
 // そのフィード自体が「人気・トレンド」枠である度合いを表す。
 const SOURCE_BUZZ_BASELINE: Record<string, number> = {
-	"Google Trends": 0.85,
+	// 検索急上昇＝鮮度が高いので元々上位に出やすい。芸能・ゴシップ寄りに偏りすぎ、
+	// はてブ等の実ブックマーク数を持つ実ニュースを埋もれさせないよう代理値は控えめにする。
+	"Google Trends": 0.7,
+	GIGAZINE: 0.45,
 	"Yahoo!": 0.4,
 	はてブ: 0.4,
 	Qiita: 0.35,
@@ -247,6 +267,13 @@ const SOURCE_BUZZ_BASELINE: Record<string, number> = {
 	"Google News": 0.3,
 };
 const DEFAULT_BUZZ_BASELINE = 0.3;
+
+// 特定ソースを優先的に上位へ出すための加点。鮮度・話題度スコアに上乗せして
+// trendScore を底上げする。「このサイトは常に拾いたい」という編集方針を表す枠で、
+// 話題度（buzz）とは別軸。値を大きくするほど強く優先される。
+const SOURCE_PRIORITY_BOOST: Record<string, number> = {
+	GIGAZINE: 0.25,
+};
 
 export function parsePubDate(value: string): Date | null {
 	if (!value) return null;
@@ -295,13 +322,23 @@ export function buzzScore(item: NewsItem): number {
 	return SOURCE_BUZZ_BASELINE[item.source ?? ""] ?? DEFAULT_BUZZ_BASELINE;
 }
 
-// 鮮度と話題度を半々で合成したスコア。大きいほど「今まさに話題」。
+// 優先表示したいソースへの加点。該当しなければ 0。
+export function priorityBoost(item: NewsItem): number {
+	return SOURCE_PRIORITY_BOOST[item.source ?? ""] ?? 0;
+}
+
+// 鮮度と話題度を半々で合成し、優先ソースの加点を上乗せしたスコア。
+// 大きいほど「今まさに話題（かつ優先的に拾いたい）」。
 export function trendScore(
 	item: NewsItem,
 	now: Date,
 	windowHours = RECENT_WINDOW_HOURS,
 ): number {
-	return 0.5 * recencyScore(item, now, windowHours) + 0.5 * buzzScore(item);
+	return (
+		0.5 * recencyScore(item, now, windowHours) +
+		0.5 * buzzScore(item) +
+		priorityBoost(item)
+	);
 }
 
 // スコア降順で並べ替える。Array.prototype.sort は安定なので同点は入力順を保つ。
@@ -370,8 +407,9 @@ export async function fetchGeneralNews(
 	maxItems = 5,
 	now: Date = new Date(),
 ): Promise<NewsItem[]> {
-	const [yahoo, ...trends] = await Promise.all([
+	const [yahoo, hatena, ...trends] = await Promise.all([
 		safeFetch("Yahoo top picks", fetchYahooTopPicks),
+		safeFetch("Hatena hotentry", fetchHatenaHotentry),
 		...GOOGLE_TRENDS_FEEDS.map((f) =>
 			safeFetch(`Google Trends ${f.geo}`, () =>
 				fetchGoogleTrends(f.geo, f.source),
@@ -379,7 +417,8 @@ export async function fetchGeneralNews(
 		),
 	]);
 	const merged = [
-		...yahoo.slice(0, 12),
+		...yahoo.slice(0, 10),
+		...hatena.slice(0, 10),
 		...trends.flatMap((t) => t.slice(0, 10)),
 	];
 	return finalizeNews(merged, maxItems, now);
@@ -389,7 +428,8 @@ export async function fetchItNews(
 	maxItems = 5,
 	now: Date = new Date(),
 ): Promise<NewsItem[]> {
-	const [hatena, qiita, zenn, publickey, google] = await Promise.all([
+	const [gigazine, hatena, qiita, zenn, publickey, google] = await Promise.all([
+		safeFetch("GIGAZINE", fetchGigazine),
 		safeFetch("Hatena IT", fetchHatenaIt),
 		safeFetch("Qiita popular", fetchQiitaPopular),
 		safeFetch("Zenn trending", fetchZennTrending),
@@ -399,6 +439,9 @@ export async function fetchItNews(
 		),
 	]);
 	const merged = [
+		// GIGAZINE は更新頻度が高く優先ブーストも効くため、枠数を絞らないとセクションを
+		// 占有してしまう。優先的に上位へ出しつつ他ソースの居場所も残すよう件数を制限する。
+		...gigazine.slice(0, 4),
 		...hatena.slice(0, 8),
 		...qiita.slice(0, 6),
 		...zenn.slice(0, 6),

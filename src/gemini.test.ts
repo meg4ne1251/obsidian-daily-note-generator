@@ -66,7 +66,7 @@ describe("summarizeWithGemini", () => {
 		const calls = vi.mocked(fetch).mock.calls;
 		const g = JSON.parse(String(calls[0][1]?.body)).contents[0].parts[0].text;
 		const i = JSON.parse(String(calls[1][1]?.body)).contents[0].parts[0].text;
-		expect(g).toContain("注目・影響度が高いトピック");
+		expect(g).toContain("日本国内で今まさに話題");
 		expect(i).toContain("IT・技術・AI分野");
 	});
 

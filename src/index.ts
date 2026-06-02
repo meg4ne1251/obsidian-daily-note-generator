@@ -153,7 +153,7 @@ export async function getNewsCategorySection(
 
 async function getNewsSection(settings: Settings): Promise<string> {
 	const [generalSection, itSection, infraSection] = await Promise.all([
-		getNewsCategorySection(settings, "🌐 一般ニュース", "general", fetchGeneralNews),
+		getNewsCategorySection(settings, "🗾 国内トレンド・ニュース", "general", fetchGeneralNews),
 		getNewsCategorySection(settings, "💻 IT・技術ニュース", "it", fetchItNews),
 		getNewsCategorySection(settings, "🏗️ インフラ・クラウドニュース", "infra", fetchInfraNews),
 	]);

@@ -26,7 +26,7 @@ export type NewsCategory = "general" | "it" | "infra";
 
 const CATEGORY_INSTRUCTION: Record<NewsCategory, string> = {
 	general:
-		"以下のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
+		"以下は日本国内で今まさに話題のニュース見出し一覧です。特に注目度・拡散度・影響度が高い国内トピックを5つ選び、",
 	it: "以下のIT・技術・AI分野のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
 	infra: "以下のインフラ・クラウド・DevOps・SRE分野のニュース見出し一覧から、特に注目・影響度が高いトピックを5つ選び、",
 };

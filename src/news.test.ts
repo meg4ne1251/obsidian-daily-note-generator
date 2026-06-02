@@ -14,6 +14,7 @@ import {
 	parseHatena,
 	parsePubDate,
 	parseRss2,
+	priorityBoost,
 	rankByTrend,
 	recencyScore,
 	trendScore,
@@ -303,8 +304,19 @@ describe("buzzScore", () => {
 	});
 
 	it("ブックマーク数が無ければソース種別の代理値を使う", () => {
-		expect(buzzScore({ title: "", link: "", pubDate: "", source: "Google Trends" })).toBe(0.85);
+		expect(buzzScore({ title: "", link: "", pubDate: "", source: "Google Trends" })).toBe(0.7);
+		expect(buzzScore({ title: "", link: "", pubDate: "", source: "GIGAZINE" })).toBe(0.45);
 		expect(buzzScore({ title: "", link: "", pubDate: "", source: "未知" })).toBe(0.3);
+	});
+});
+
+describe("priorityBoost", () => {
+	it("優先ソース(GIGAZINE)には加点し、それ以外は 0 を返す", () => {
+		expect(priorityBoost({ title: "", link: "", pubDate: "", source: "GIGAZINE" })).toBeGreaterThan(
+			0,
+		);
+		expect(priorityBoost({ title: "", link: "", pubDate: "", source: "Publickey" })).toBe(0);
+		expect(priorityBoost({ title: "", link: "", pubDate: "" })).toBe(0);
 	});
 });
 
@@ -327,6 +339,13 @@ describe("trendScore / rankByTrend", () => {
 		];
 		expect(rankByTrend(items, now).map((i) => i.title)).toEqual(["高", "低"]);
 		expect(items[0].title).toBe("低");
+	});
+
+	it("優先ソースは同じ鮮度・話題度の他ソースより高スコアになる", () => {
+		const base = { title: "", link: "", pubDate: "2026-06-01T00:00:00Z" };
+		const giga = trendScore({ ...base, source: "GIGAZINE" }, now);
+		const publickey = trendScore({ ...base, source: "Publickey" }, now);
+		expect(giga).toBeGreaterThan(publickey);
 	});
 });
 
@@ -425,6 +444,29 @@ describe("fetchGeneralNews", () => {
 		expect(items.map((i) => i.source)).toContain("Yahoo!");
 	});
 
+	it("はてブ総合を取り込み、ブックマーク数で上位に並べる", async () => {
+		stubFetchByUrl([
+			{
+				match: "news.yahoo.co.jp",
+				xml: rss2([
+					{ title: "Y1", link: "https://y.com/1", pubDate: "Thu, 28 May 2026 12:00:00 GMT" },
+				]),
+			},
+			{
+				match: "b.hatena.ne.jp",
+				xml: hatena([{ title: "HB-hot", link: "https://h.com/hot", count: 500 }]),
+			},
+			{ match: "trends.google.com", xml: trends([]) },
+		]);
+
+		const items = await fetchGeneralNews(20, new Date("2026-05-29T00:00:00Z"));
+		expect(items[0]).toMatchObject({
+			title: "HB-hot",
+			source: "はてブ",
+			bookmarkCount: 500,
+		});
+	});
+
 	it("取得失敗時は safeFetch により空配列を返す", async () => {
 		vi.stubGlobal(
 			"fetch",
@@ -498,6 +540,28 @@ describe("fetchItNews", () => {
 
 		const items = await fetchItNews(20, new Date("2026-05-29T00:00:00Z"));
 		expect(items.map((i) => i.title)).toContain("H1");
+	});
+
+	it("GIGAZINE を取り込み、優先度ブーストで控えめなブクマ記事より上位に出す", async () => {
+		stubFetchByUrl([
+			{
+				match: "gigazine.net",
+				xml: rss2([
+					{ title: "GZ1", link: "https://gigazine.net/1", pubDate: "Fri, 29 May 2026 00:00:00 GMT" },
+				]),
+			},
+			{
+				match: "b.hatena.ne.jp",
+				xml: hatena([{ title: "H1", link: "https://h.com/1", count: 60 }]),
+			},
+			{ match: "qiita.com", xml: atom([]) },
+			{ match: "zenn.dev", xml: rss2([]) },
+			{ match: "publickey1.jp", xml: atom([]) },
+			{ match: "news.google.com", xml: rss2([]) },
+		]);
+
+		const items = await fetchItNews(20, new Date("2026-05-29T00:00:00Z"));
+		expect(items[0]).toMatchObject({ title: "GZ1", source: "GIGAZINE" });
 	});
 });
 

@@ -124,11 +124,11 @@ describe("getNewsCategorySection", () => {
 	it("取得件数が 0 なら『取得できませんでした』を返す", async () => {
 		const section = await getNewsCategorySection(
 			baseSettings(),
-			"🌐 一般ニュース",
+			"🗾 国内トレンド・ニュース",
 			"general",
 			async () => [],
 		);
-		expect(section).toBe("### 🌐 一般ニュース\n*ニュースを取得できませんでした*");
+		expect(section).toBe("### 🗾 国内トレンド・ニュース\n*ニュースを取得できませんでした*");
 	});
 
 	it("見出し一覧をソース・ブックマーク数つきリンクで整形し、AI 要約を挟む", async () => {
@@ -208,7 +208,7 @@ describe("generateDailyNote", () => {
 		expect(content).toContain("## 📅 今日の予定");
 		expect(content).toContain("Google カレンダーの認証情報が設定されていません");
 		expect(content).toContain("## 📰 注目ニュース");
-		expect(content).toContain("### 🌐 一般ニュース");
+		expect(content).toContain("### 🗾 国内トレンド・ニュース");
 		expect(content).toContain("### 💻 IT・技術ニュース");
 		expect(content).toContain("### 🏗️ インフラ・クラウドニュース");
 		expect(content).toContain("## 📝 メモ");
